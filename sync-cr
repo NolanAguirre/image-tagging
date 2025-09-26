@@ -1,0 +1,27 @@
+#!/bin/sh
+set -eu
+
+shout() { echo "$0: $*" >&2; }
+barf() { shout "fatal: $*"; exit 111; }
+safe() { "$@" || barf "cannot $*"; }
+
+# Create a real temporary directory
+TMPDIR="$(mktemp -d)" || barf "mktemp failed"
+trap 'rm -rf "$TMPDIR"' EXIT INT TERM
+
+# Clone repo into the temp dir
+safe git clone --depth 1 git@github.com:NolanAguirre/cursor-rules.git "$TMPDIR"
+
+# Copy local .cursorrules into cloned repo
+safe cp ./.cursorrules "$TMPDIR/.cursorrules"
+
+# Commit and push only if there are changes
+cd "$TMPDIR" || barf "cannot cd to $TMPDIR"
+
+if ! git diff --quiet -- .cursorrules; then
+    safe git add .cursorrules
+    safe git commit -m "Update .cursorrules from remote repository"
+    safe git push
+else
+    shout "no changes to commit"
+fi
