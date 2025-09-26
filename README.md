@@ -1,2 +1,2 @@
 # image-tagging
-A image tagging application using sqllite
+A image tagging application using postgresql
